@@ -25,7 +25,7 @@ git clone https://github.com/SM4250-Dev/device_realme_bengal-common device/realm
 # Vendor
 git clone https://github.com/UdyneO2/android_vendor_realme_RMX2195 vendor/realme/RMX2195 -b main --depth=1; \
 # Kernel
-git clone https://github.com/SM4250-Dev/kernel_realme_RMX2195 kernel/realme/RMX2195 --depth=1 -b rebase ; \
+git clone https://github.com/SM4250-Dev/kernel_realme_RMX2195 kernel/realme/bengal --depth=1 -b rebase ; \
 
 # Oplus
 git clone https://github.com/crdroidandroid/android_hardware_oplus hardware/oplus -b 12.1 ; \
