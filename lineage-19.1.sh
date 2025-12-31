@@ -12,7 +12,8 @@ rm -rf prebuilts/clang/host/linux-x86; \
 
 rm -rf out/target/product/RMX2195; \
 rm -rf device/realme/RMX2195; \
-rm -rf kernel/realme/RMX2195; \
+rm -rf device/realme/bengal-common; \
+rm -rf kernel/realme/bengal; \
 rm -rf vendor/realme/RMX2195; \
 rm -rf hardware/oplus; \
 
