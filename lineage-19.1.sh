@@ -12,24 +12,23 @@ rm -rf prebuilts/clang/host/linux-x86; \
 
 rm -rf out/target/product/RMX2195; \
 rm -rf device/realme/RMX2195; \
-rm -rf device/realme/bengal-common; \
+rm -rf device/realme/sm4250-common; \
 rm -rf kernel/realme/bengal; \
 rm -rf vendor/realme/RMX2195; \
 rm -rf hardware/oplus; \
 
 
 # Device Tree
-git clone https://github.com/SM4250-Dev/device_realme_RMX2195 device/realme/RMX2195 -b main --depth=1; \
+git clone https://github.com/SM4250-Dev/device_realme_RMX2195 device/realme/RMX2195 -b 12.1 --depth=1; \
 # Common
-git clone https://github.com/SM4250-Dev/device_realme_bengal-common device/realme/bengal-common -b main --depth=1; \
+git clone https://github.com/SM4250-Dev/device_realme_sm4250-common device/realme/sm4250-common -b 12.1 --depth=1; \
 
 # Vendor
-git clone https://github.com/UdyneO2/android_vendor_realme_RMX2195 vendor/realme/RMX2195 -b main --depth=1; \
+git clone https://github.com/SM4250-Dev/vendor_realme_RMX2195 vendor/realme/RMX2195 -b 12.1 --depth=1; \
+git clone https://github.com/SM4250-Dev/vendor_realme_sm4250-common vendor/realme/sm4250-common -b 12.1 --depth=1; \
+
 # Kernel
 git clone https://github.com/SM4250-Dev/kernel_realme_RMX2195 kernel/realme/bengal --depth=1 -b rebase ; \
-
-# Oplus
-git clone https://github.com/crdroidandroid/android_hardware_oplus hardware/oplus -b 12.1 ; \
 
 . build/envsetup.sh; \
 export BUILD_USERNAME=udyneos
