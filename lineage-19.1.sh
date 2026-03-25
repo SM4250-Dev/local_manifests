@@ -28,7 +28,7 @@ git clone https://github.com/SM4250-Dev/vendor_realme_RMX2195 vendor/realme/RMX2
 git clone https://github.com/SM4250-Dev/vendor_realme_sm4250-common vendor/realme/sm4250-common -b 12.1 --depth=1; \
 
 # Kernel
-git clone https://github.com/SM4250-Dev/kernel_realme_RMX2195 kernel/realme/bengal --depth=1 -b rebase ; \
+git clone https://github.com/SM4250-Dev/android_kernel_realme_RMX2195 kernel/realme/sm4250-common --depth=1 -b stable ; \
 
 . build/envsetup.sh; \
 export BUILD_USERNAME=udyneos
