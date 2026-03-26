@@ -12,10 +12,10 @@ rm -rf prebuilts/clang/host/linux-x86; \
 
 rm -rf out/target/product/RMX2195; \
 rm -rf device/realme/RMX2195; \
-rm -rf device/realme/sm4250-common; \
-rm -rf kernel/realme/bengal; \
 rm -rf vendor/realme/RMX2195; \
-rm -rf hardware/oplus; \
+rm -rf device/realme/sm4250-common; \
+rm -rf kernel/realme/sm4250-common; \
+rm -rf vendor/realme/sm4250-common; \
 
 
 # Device Tree
@@ -28,7 +28,7 @@ git clone https://github.com/SM4250-Dev/vendor_realme_RMX2195 vendor/realme/RMX2
 git clone https://github.com/SM4250-Dev/vendor_realme_sm4250-common vendor/realme/sm4250-common -b 12.1 --depth=1; \
 
 # Kernel
-git clone https://github.com/SM4250-Dev/android_kernel_realme_RMX2195 kernel/realme/sm4250-common --depth=1 -b stable ; \
+git clone https://github.com/SM4250-Dev/android_kernel_realme_RMX2195 kernel/realme/sm4250-common --depth=1 -b Skywalker-backup ; \
 
 . build/envsetup.sh; \
 export BUILD_USERNAME=udyneos
