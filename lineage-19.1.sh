@@ -8,6 +8,8 @@ rm -rf prebuilts/clang/host/linux-x86; \
 
 /opt/crave/resync.sh; \
 
+rm -rf prebuilts/clang/host/linux-x86/clang-3289846; \
+
 
 
 rm -rf out/target/product/RMX2195; \
