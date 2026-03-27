@@ -32,6 +32,8 @@ git clone https://github.com/SM4250-Dev/vendor_realme_sm4250-common vendor/realm
 # Kernel
 git clone https://github.com/SM4250-Dev/android_kernel_realme_RMX2195 kernel/realme/sm4250-common --depth=1 -b Skywalker-backup ; \
 
+CLANG_PATH=prebuilts/clang/host/linux-x86/clang-r383902
+
 . build/envsetup.sh; \
 export BUILD_USERNAME=udyneos
 export BUILD_HOSTNAME=craveoss
