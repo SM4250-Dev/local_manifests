@@ -20,12 +20,12 @@ export TZ="Asia/Jakarta"
 echo -e "${cyan}🕒 Current system time: $(date)${nocol}"
 
 # ================= ROM INFO =================
-ROM_NAME="Lineage-19.1"
+ROM_NAME="Lineage-18.1"
 DEVICE="RMX2195"
 BUILD_TYPE="userdebug"
-ANDROID_VERSION="12.1"
+ANDROID_VERSION="11.1"
 SECURITY_PATCH="Maret"
-ROM_VERSION="12.1 Beta"
+ROM_VERSION="11.1 Test"
 MAINTAINER="mnrdnn"
 
 OUT_DIR="out/target/product/${DEVICE}"
@@ -128,7 +128,7 @@ rm -rf kernel/realme/sm4250-common; \
 rm -rf vendor/realme/sm4250-common; \
 
 echo -e "${blue}>>>> [STEP] Repo Init${nocol}"
-repo init -u https://github.com/LineageOS/android.git -b lineage-19.1 --git-lfs
+repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --git-lfs
 echo -e "${blue}>>>> [STEP] Local Manifests${nocol}"
 # Device Tree
 git clone https://github.com/SM4250-Dev/device_realme_RMX2195 device/realme/RMX2195 -b 12.1 --depth=1; \
@@ -145,8 +145,6 @@ if [ -f /opt/crave/resync.sh ]; then
 else
     repo sync -c --force-sync --no-tags --no-clone-bundle -j$(nproc --all)
 fi
-#rm -rf prebuilts/clang/host/linux-x86/clang-3289846; \
-CLANG_PATH=prebuilts/clang/host/linux-x86/clang-r383902
 
 echo -e "${green}>>>> [STEP] Export info & Build${nocol}"
 . build/envsetup.sh
