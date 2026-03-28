@@ -106,7 +106,7 @@ tg_send "✨ ${ROM_NAME} buildbot started
 ⚙️ Version: ${ROM_VERSION}
 ⚓️ Android: ${ANDROID_VERSION}
 🛡 Patch: ${SECURITY_PATCH}
-�� Maintainer: ${MAINTAINER}
+👤 Maintainer: ${MAINTAINER}
 🌏 $(date +"%d %b %Y %I:%M %p IST")"
 
 # ================= BUILD =================
@@ -226,7 +226,11 @@ PRIVATE_MSG="📦 ${ROM_NAME} Uploads
 
 ROM_ZIP=$(ls -t ${OUT_DIR}/*.zip 2>/dev/null | head -n 1)
 
-if [ -n "$ROM_ZIP" ]; then
+if [ -z "$ROM_ZIP" ]; then
+   PRIVATE_MSG+=" Build Failed 👾
+   "
+   exit 0
+else
     PRIVATE_MSG+="📄 ROM: $(basename "$ROM_ZIP")
 GoFile: $(gofile_upload "$ROM_ZIP")
 PixelDrain: $(pixeldrain_upload "$ROM_ZIP")
