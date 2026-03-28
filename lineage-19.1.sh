@@ -20,12 +20,12 @@ export TZ="Asia/Jakarta"
 echo -e "${cyan}🕒 Current system time: $(date)${nocol}"
 
 # ================= ROM INFO =================
-ROM_NAME="LineageOS 19.1"
+ROM_NAME="Lineage-19.1"
 DEVICE="RMX2195"
 BUILD_TYPE="userdebug"
-ANDROID_VERSION="v12.1"
-SECURITY_PATCH="March ASB 2020"
-ROM_VERSION="v19.1 Beta"
+ANDROID_VERSION="12.1"
+SECURITY_PATCH="Maret"
+ROM_VERSION="12.1 Beta"
 MAINTAINER="mnrdnn"
 
 OUT_DIR="out/target/product/${DEVICE}"
@@ -107,7 +107,7 @@ tg_send "✨ ${ROM_NAME} buildbot started
 ⚓️ Android: ${ANDROID_VERSION}
 🛡 Patch: ${SECURITY_PATCH}
 👤 Maintainer: ${MAINTAINER}
-🌏 $(date +"%d %b %Y %I:%M %p IST")"
+🌏 $(date +"%d %b %Y %I:%M %p WIB")"
 
 # ================= BUILD =================
 echo -e "${blue}>>>> [STEP] Setup + Clean${nocol}"
@@ -213,7 +213,7 @@ tg_send "🌌 Buildbot finished it's job
 🆔 Build ID: <code>${BUILD_ID}</code>
 📦 Size: ${ROM_SIZE}
 👤 Maintainer: ${MAINTAINER}
-⏳ <i>Compilation took $((DUR/3600))h $(((DUR%3600)/60))min</i>"
+⏳ Compilation took $((DUR/3600))h $(((DUR%3600)/60))min"
 
 tg_send "🚨 Compile Success. Uploading artifacts…"
 
