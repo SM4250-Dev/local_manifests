@@ -168,20 +168,28 @@ live_monitor() {
     while true; do
         sleep 60
         if [ -f "$BUILD_LOG" ]; then
-            STATUS=$(tail -n 20 "$BUILD_LOG" | grep -o '\[.*\]' | tail -n 1)
+            # Get last 20 lines and find compilation status
+            STATUS=$(tail -n 20 "$BUILD_LOG" | grep -E '\[.*%[[:space:]]+[0-9]+/[0-9]+\]|ninja:|make:' | tail -n 1)
+            
             if [[ -z "$STATUS" ]]; then
                 STATUS=$(tail -n 1 "$BUILD_LOG" | cut -c1-60)
             fi
+            
             if [[ "$STATUS" != "$last_status" && ! -z "$STATUS" ]]; then
                 tg_edit "$msg_id" "⏳ Compiling status...
 <code>${STATUS}</code>
-_Last Update: $(date +'%I:%M %p')_"
+<i>Last Update: $(date +'%I:%M %p')</i>"
                 last_status="$STATUS"
             fi
+        else
+            tg_edit "$msg_id" "⏳ Compiling status...
+<code>Compiling ROM ...</code>
+<i>Last Update: $(date +'%I:%M %p')</i>"
         fi
     done
 }
 
+# Start monitor in background
 live_monitor "$MSG_ID" &
 MONITOR_PID=$!
 
@@ -192,8 +200,9 @@ make bacon -j$(nproc --all) 2>&1 | tee "$BUILD_LOG"
 kill $MONITOR_PID 2>/dev/null
 MONITOR_PID=""
 
-[ "${PIPESTATUS[0]}" -ne 0 ] && on_fail
-
+if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+    on_fail
+fi
 # ================= SUCCESS =================
 END_TIME=$(date +%s)
 DUR=$((END_TIME - START_TIME))
