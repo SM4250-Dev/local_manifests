@@ -16,10 +16,6 @@ nocol='\033[0m'
 # ================= TIMEZONE =================
 echo -e "${cyan}🕒 Switching system timezone to Asia/Jakarta ${nocol}"
 export TZ="Asia/Jakarta"
-if [ -z "$TT" ] || [ -z "$CI" ] || [ -z "$PD" ] || [ -z "$GT" ]; then
-    echo -e ".env missing"
-    exit 1
-fi
 
 echo -e "${cyan}🕒 Current system time: $(date)${nocol}"
 
@@ -36,6 +32,55 @@ OUT_DIR="out/target/product/${DEVICE}"
 START_TIME=$(date +%s)
 BUILD_LOG="build.log"
 ERROR_LOG="error_log.txt"
+
+if [ -z "$TT" ] || [ -z "$CI" ] || [ -z "$PD" ] || [ -z "$GT" ]; then
+  echo -e ".env gagal di setup"
+  
+  # Build Command
+  sudo apt-get update -y sudo apt-get install -y patchelf coreutils
+  sudo ln -s /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5
+  sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
+
+  rm -rf build/soong/fsgen
+  rm -rf .repo/local_manifests; \
+  rm -rf prebuilts/clang/host/linux-x86; \
+  rm -rf out/target/product/RMX2195; \
+  rm -rf device/realme/RMX2195; \
+  rm -rf vendor/realme/RMX2195; \
+  rm -rf device/realme/sm4250-common; \
+  rm -rf kernel/realme/sm4250-common; \
+  rm -rf vendor/realme/sm4250-common; \
+
+  echo -e "${blue}>>>> [STEP] Repo Init${nocol}"
+  repo init -u https://github.com/LineageOS/android.git -b lineage-19.1 --git-lfs
+  echo -e "${blue}>>>> [STEP] Local Manifests${nocol}"
+  # Device Tree
+  git clone https://github.com/SM4250-Dev/device_realme_RMX2195 device/realme/RMX2195 -b 12.1 --depth=1; \
+  # Common
+  git clone https://github.com/SM4250-Dev/device_realme_sm4250-common device/realme/sm4250-common -b 12.1 --depth=1; \
+  # Vendor
+  git clone https://github.com/SM4250-Dev/vendor_realme_RMX2195 vendor/realme/RMX2195 -b 12.1 --depth=1; \
+  git clone https://github.com/SM4250-Dev/vendor_realme_sm4250-common vendor/realme/sm4250-common -b 12.1 --depth=1; \
+  # Kernel
+  git clone https://github.com/SM4250-Dev/android_kernel_realme_RMX2195 kernel/realme/sm4250-common --depth=1 -b Skywalker-backup ; \
+  echo -e "${yellow}>>>> [STEP] Repo Sync (this will take time)${nocol}"
+  if [ -f /opt/crave/resync.sh ]; then
+    /opt/crave/resync.sh
+  else
+    repo sync -c --force-sync --no-tags --no-clone-bundle -j$(nproc --all)
+  fi
+  rm -rf prebuilts/clang/host/linux-x86/clang-3289846; \
+  CLANG_PATH=prebuilts/clang/host/linux-x86/clang-r383902
+
+  echo -e "${green}>>>> [STEP] Export info & Build${nocol}"
+  . build/envsetup.sh
+  export BUILD_USERNAME=mnrdnn
+  export BUILD_HOSTNAME=crave
+  lunch lineage_${DEVICE}-${BUILD_TYPE} && make bacon -j$(nproc --all)  ; \
+  exit 1
+else
+  echo -e ".env berhasil di setup"
+fi
 
 # ================= TELEGRAM =================
 tg_send() {
@@ -212,7 +257,7 @@ tg_send "🌌 Buildbot finished it's job
 👤 Maintainer: ${MAINTAINER}
 ⏳ <i>Compilation took $((DUR/3600))h $(((DUR%3600)/60))min</i>"
 
-tg_send "🚨 Compiler Success. Uploading artifacts…"
+tg_send "🚨 Compile Success. Uploading artifacts…"
 
 # ================= UPLOAD =================
 echo -e "${green}>>>> [STEP] Upload Artifacts${nocol}"
