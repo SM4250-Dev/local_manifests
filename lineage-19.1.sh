@@ -15,10 +15,9 @@ nocol='\033[0m'
 
 # ================= TIMEZONE =================
 echo -e "${cyan}🕒 Switching system timezone to Asia/Jakarta ${nocol}"
-sudo rm -f /etc/localtime
-sudo ln -s /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
-
+export TZ="Asia/Jakarta"
 if [ -z "$TT" ] || [ -z "$CI" ] || [ -z "$PD" ] || [ -z "$GT" ]; then
+    echo -e ".env missing"
     exit 1
 fi
 
