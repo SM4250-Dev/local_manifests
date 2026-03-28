@@ -236,7 +236,7 @@ PixelDrain: $(pixeldrain_upload "$ROM_ZIP")
 "
 fi
 
-for IMG in boot.img vendor_boot.img init_boot.img super_empty.img recovery.img; do
+for IMG in boot.img dtbo.img vendor.img super_empty.img recovery.img; do
     FILE="${OUT_DIR}/${IMG}"
     [ -f "$FILE" ] && PRIVATE_MSG+="🧩 ${IMG}
 GoFile: $(gofile_upload "$FILE")
