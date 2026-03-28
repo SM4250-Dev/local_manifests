@@ -27,7 +27,7 @@ echo -e "${cyan}🕒 Current system time: $(date)${nocol}"
 ROM_NAME="LineageOS 19.1"
 DEVICE="RMX2195"
 BUILD_TYPE="userdebug"
-ANDROID_VERSION="v11"
+ANDROID_VERSION="v12.1"
 SECURITY_PATCH="March ASB 2020"
 ROM_VERSION="v19.1 Beta"
 MAINTAINER="mnrdnn"
@@ -108,7 +108,13 @@ tg_send "✨ ${ROM_NAME} buildbot started
 🌏 $(date +"%d %b %Y %I:%M %p IST")"
 
 # ================= BUILD =================
-echo -e "${blue}>>>> [STEP] Clean${nocol}"
+echo -e "${blue}>>>> [STEP] Setup + Clean${nocol}"
+
+sudo apt-get update -y sudo apt-get install -y patchelf coreutils
+sudo ln -s /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5
+sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
+
+rm -rf build/soong/fsgen
 rm -rf .repo/local_manifests; \
 rm -rf prebuilts/clang/host/linux-x86; \
 rm -rf out/target/product/RMX2195; \
@@ -206,7 +212,7 @@ tg_send "🌌 Buildbot finished it's job
 👤 Maintainer: ${MAINTAINER}
 ⏳ <i>Compilation took $((DUR/3600))h $(((DUR%3600)/60))min</i>"
 
-tg_send "🚨 Compiler gave up arguing. Uploading artifacts…"
+tg_send "🚨 Compiler Success. Uploading artifacts…"
 
 # ================= UPLOAD =================
 echo -e "${green}>>>> [STEP] Upload Artifacts${nocol}"
