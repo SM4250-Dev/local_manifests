@@ -112,7 +112,8 @@ tg_send "✨ ${ROM_NAME} buildbot started
 # ================= BUILD =================
 echo -e "${blue}>>>> [STEP] Setup + Clean${nocol}"
 
-sudo apt-get update -y sudo apt-get install -y patchelf coreutils
+sudo apt-get update -y
+sudo apt-get install -y patchelf coreutils
 sudo ln -s /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5
 sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
 
