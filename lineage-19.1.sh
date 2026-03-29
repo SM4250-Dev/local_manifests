@@ -23,9 +23,9 @@ echo -e "${cyan}🕒 Current system time: $(date)${nocol}"
 ROM_NAME="Lineage-19.1"
 DEVICE="RMX2195"
 BUILD_TYPE="userdebug"
-ANDROID_VERSION="11.1"
+ANDROID_VERSION="12.1"
 SECURITY_PATCH="Maret"
-ROM_VERSION="11.1 Test"
+ROM_VERSION="12.1-Testing"
 MAINTAINER="mnrdnn"
 
 OUT_DIR="out/target/product/${DEVICE}"
@@ -161,7 +161,6 @@ MSG_JSON=$(curl -s -X POST "https://api.telegram.org/bot${TT}/sendMessage" \
 MSG_ID=$(echo "$MSG_JSON" | grep -oP '"message_id":\K[0-9]+')
 
 live_monitor() {
-    local msg_id=$1
     local last_status=""
     while true; do
         sleep 60
@@ -174,13 +173,13 @@ live_monitor() {
             fi
             
             if [[ "$STATUS" != "$last_status" && ! -z "$STATUS" ]]; then
-                tg_edit "$msg_id" "⏳ Compiling status...
+                tg_edit "$MSG_ID" "⏳ Compiling status...
 <code>${STATUS}</code>
 <i>Last Update: $(date +'%I:%M %p')</i>"
                 last_status="$STATUS"
             fi
         else
-            tg_edit "$msg_id" "⏳ Compiling status...
+            tg_edit "$MSG_ID" "⏳ Compiling status...
 <code>Compiling ROM ...</code>
 <i>Last Update: $(date +'%I:%M %p')</i>"
         fi
@@ -194,6 +193,10 @@ MONITOR_PID=$!
 # Start the build
 set -o pipefail
 make bacon -j$(nproc --all) 2>&1 | tee "$BUILD_LOG"
+
+tg_upload "💥 Debugging - Build Log
+📱 Codename: ${DEVICE}
+📄 Build log: $BUILD_LOG"
 
 kill $MONITOR_PID 2>/dev/null
 MONITOR_PID=""
