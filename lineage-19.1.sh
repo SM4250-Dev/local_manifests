@@ -138,7 +138,7 @@ git clone https://github.com/SM4250-Dev/device_realme_sm4250-common device/realm
 git clone https://github.com/SM4250-Dev/vendor_realme_RMX2195 vendor/realme/RMX2195 -b 12.1 --depth=1; \
 git clone https://github.com/SM4250-Dev/vendor_realme_sm4250-common vendor/realme/sm4250-common -b 12.1 --depth=1; \
 # Kernel
-git clone https://github.com/SM4250-Dev/android_kernel_realme_RMX2195 kernel/realme/sm4250-common --depth=1 -b Skywalker-backup ; \
+git clone https://github.com/LineageOS/android_kernel_oneplus_sm4250.git kernel/realme/sm4250-common --depth=1 -b lineage-20 ; \
 echo -e "${yellow}>>>> [STEP] Repo Sync (this will take time)${nocol}"
 if [ -f /opt/crave/resync.sh ]; then
     /opt/crave/resync.sh
