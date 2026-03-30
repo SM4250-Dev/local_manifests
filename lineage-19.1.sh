@@ -120,7 +120,7 @@ sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/lib
 rm -rf build/soong/fsgen
 rm -rf .repo/local_manifests; \
 rm -rf prebuilts/clang/host/linux-x86; \
-rm -rf out/target/product/RMX2195; \
+#rm -rf out/target/product/RMX2195; \
 rm -rf device/realme/RMX2195; \
 rm -rf vendor/realme/RMX2195; \
 rm -rf device/realme/sm4250-common; \
