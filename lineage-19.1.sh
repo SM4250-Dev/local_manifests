@@ -33,9 +33,9 @@ gf_upload() {
 
 # ========== BUILD ==========
 echo -e "${C}🕒 Build started at $(date)${N}"
-tg "✨ ${ROM} build started
+tg "✨ ${ROM} - Build started at $(date)${N}
 📱 ${DEV} | ${TYPE}
-📦 ${FINAL_NAME}.zip
+📦 ${FINAL_NAME}
 👤 ${MAIN}
 🌏 $(date +'%d %b %Y %H:%M')"
 
@@ -74,12 +74,12 @@ MSG=$(curl -s -X POST "https://api.telegram.org/bot${TT}/sendMessage" -d "chat_i
 MID=$(echo "$MSG" | sed -n 's/.*"message_id":\([0-9]*\).*/\1/p')
 
 ( while true; do
-    sleep 60
+    sleep 30
     STATUS=$(tail -n 30 "$LOG" 2>/dev/null | grep -E '\[[0-9]+%\]|[0-9]+%|Building' | tail -1)
     [ -z "$STATUS" ] && STATUS=$(tail -1 "$LOG" 2>/dev/null | cut -c1-60)
     [ -n "$STATUS" ] && tg_edit "$MID" "⏳ Building...
 ⏳${STATUS:0:100}
-🕐 $(date +'%H:%M')"
+Last Update: $(date +'%H:%M')"
 done ) &
 MON_PID=$!
 
@@ -90,6 +90,10 @@ if [ ${PIPESTATUS[0]} -ne 0 ]; then
     tg "❌ Build failed!
 📱 ${DEV}
 📄 Log: $(gf_upload "$LOG")"
+    for img in boot dtbo recovery super_empty; do
+        [ -f "$OUT/${img}.img" ] && tg "🧩 ${img}.img: $(gf_upload "$OUT/${img}.img")"
+    done
+    kill $MON_PID 2>/dev/null
     exit 1
 fi
 kill $MON_PID 2>/dev/null
@@ -118,7 +122,7 @@ if [ -n "$ZIP" ] && [ -f "$ZIP" ]; then
     
     tg "✅ Build complete!
 📱 ${DEV} | ${TYPE}
-📦 ${FINAL_NAME}.zip
+📦 ${FINAL_NAME}
 📏 ${SIZE}
 ⏱️ $((DUR/3600))h $(((DUR%3600)/60))m
 🔗 PD: ${PD_URL}\n"
