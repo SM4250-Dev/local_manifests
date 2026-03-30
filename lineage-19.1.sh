@@ -78,7 +78,7 @@ MID=$(echo "$MSG" | sed -n 's/.*"message_id":\([0-9]*\).*/\1/p')
     STATUS=$(tail -n 30 "$LOG" 2>/dev/null | grep -E '\[[0-9]+%\]|[0-9]+%|Building' | tail -1)
     [ -z "$STATUS" ] && STATUS=$(tail -1 "$LOG" 2>/dev/null | cut -c1-60)
     [ -n "$STATUS" ] && tg_edit "$MID" "⏳ Building...
-<code>${STATUS:0:100}</code>
+⏳${STATUS:0:100}
 🕐 $(date +'%H:%M')"
 done ) &
 MON_PID=$!
