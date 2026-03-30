@@ -95,17 +95,19 @@ gofile_upload() {
 # ================= FAIL =================
 on_fail() {
     ERR_LINK="N/A"
-    [ -f out/error.log ] && ERR_LINK=$(gofile_upload out/error.log)
-
-    tg_send "💥 Compilation failed
-📱 Codename: ${DEVICE}
-📄 Check Build Logs"
-
-    tg_upload "💥 Compilation failed
+    ERR_LOG="out/error.log"
+    [ -f "$ERR_LOG" ] && ERR_LINK=$(gofile_upload "$ERR_LOG")
+    
+    if [ $(stat -c%s "$ERR_LOG" 2>/dev/null || stat -f%z "$ERR_LOG" 2>/dev/null) -gt 52428800 ]; then
+        tg_upload "💥 Compilation failed
 📱 Codename: ${DEVICE}
 📄 Error log: ${ERR_LINK}"
-
+    else
+        tg_up "$ERR_LOG" "💥 Upload - Error Log
+📱 Codename: ${DEVICE}"
+    fi
 }
+
 # ================= BUILD START =================
 tg_send "✨ ${ROM_NAME} buildbot started
 📱 Codename: ${DEVICE} | 🧪 Build Type: ${BUILD_TYPE}
@@ -194,9 +196,6 @@ MONITOR_PID=$!
 set -o pipefail
 make bacon -j$(nproc --all) 2>&1 | tee "$BUILD_LOG"
 
-tg_upload "💥 Debugging - Build Log
-📱 Codename: ${DEVICE}
-📄 Build log: $BUILD_LOG"
 tg_edit "$MSG_ID" "⏳ Done!
 <i>Last Update: $(date +'%I:%M %p')</i>"
 
@@ -229,8 +228,19 @@ tg_send "🚨 Uploading artifacts…"
 # ================= UPLOAD =================
 echo -e "${green}>>>> [STEP] Upload Artifacts${nocol}"
 
-tg_up "$BUILD_LOG" "💥 Debugging - Build Log
+upload_log(){
+    BUILD_LOG_LINK="N/A"
+    [ -f "$BUILD_LOG" ] && BUILD_LOG_LINK=$(gofile_upload "$BUILD_LOG")
+    if [ $(stat -c%s "$BUILD_LOG" 2>/dev/null || stat -f%z "$BUILD_LOG" 2>/dev/null) -gt 52428800 ]; then
+        tg_upload "💥 Build Log Upload
+📱 Codename: ${DEVICE}
+📄 Build log: ${BUILD_LOG_LINK}"
+    else
+        tg_up "$BUILD_LOG" "💥 Upload - Build Log
 📱 Codename: ${DEVICE}"
+    fi
+}
+upload_log
 
 PRIVATE_MSG="📦 ${ROM_NAME} Uploads
 📱 Device: ${DEVICE}
