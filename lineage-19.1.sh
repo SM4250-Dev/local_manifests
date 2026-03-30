@@ -64,6 +64,15 @@ tg_upload() {
         --data-urlencode "text=$1" >/dev/null
 }
 
+tg_up() {
+    echo "- Uploading file ..."
+    curl -fsSL -X POST -F document=@"$1" https://api.telegram.org/bot"${TT}"/sendDocument \
+        -F "chat_id=${CI}" \
+        -d "parse_mode=HTML" \
+        -d "disable_web_page_preview=true" \
+        --data-urlencode "text=$2" >/dev/null
+}
+
 # ================= PIXELDRAIN =================
 pixeldrain_upload() {
     local FILE="$1"
@@ -229,6 +238,9 @@ tg_send "🚨 Compile Success. Uploading artifacts…"
 
 # ================= UPLOAD =================
 echo -e "${green}>>>> [STEP] Upload Artifacts${nocol}"
+
+tg_up "$BUILD_LOG" "💥 Debugging - Build Log
+📱 Codename: ${DEVICE}"
 
 PRIVATE_MSG="📦 ${ROM_NAME} Uploads
 📱 Device: ${DEVICE}
