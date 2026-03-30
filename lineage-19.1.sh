@@ -228,6 +228,35 @@ tg_send "🚨 Uploading artifacts…"
 # ================= UPLOAD =================
 echo -e "${green}>>>> [STEP] Upload Artifacts${nocol}"
 
+
+PRIVATE_MSG="📦 ${ROM_NAME} Uploads
+📱 Device: ${DEVICE}
+🧩 Build Type: ${BUILD_TYPE}
+"
+
+ROM_ZIP=$(ls -t ${OUT_DIR}/*.zip 2>/dev/null | head -n 1)
+
+if [ -n "$ROM_ZIP" ]; then
+    PRIVATE_MSG+="📄 ROM: $(basename "$ROM_ZIP")
+PixelDrain: $(pixeldrain_upload "$ROM_ZIP")
+"
+fi
+
+for IMG in boot.img dtbo.img super_empty.img recovery.img; do
+    FILE="${OUT_DIR}/${IMG}"
+    [ -f "$FILE" ] && PRIVATE_MSG+="🧩 ${IMG}
+GoFile: $(gofile_upload "$FILE")
+"
+done
+
+OTA_JSON="${OUT_DIR}/GMS/${DEVICE}.json"
+
+if [ -f "$OTA_JSON" ]; then
+    PRIVATE_MSG+="📑 OTA JSON: $(basename "$OTA_JSON")
+GoFile: $(gofile_upload "$OTA_JSON")
+"
+fi
+
 upload_log(){
     BUILD_LOG_LINK="N/A"
     [ -f "$BUILD_LOG" ] && BUILD_LOG_LINK=$(gofile_upload "$BUILD_LOG")
@@ -241,38 +270,6 @@ upload_log(){
     fi
 }
 upload_log
-
-PRIVATE_MSG="📦 ${ROM_NAME} Uploads
-📱 Device: ${DEVICE}
-🧩 Build Type: ${BUILD_TYPE}
-"
-
-ROM_ZIP=$(ls -t ${OUT_DIR}/*.zip 2>/dev/null | head -n 1)
-
-if [ -n "$ROM_ZIP" ]; then
-    PRIVATE_MSG+="📄 ROM: $(basename "$ROM_ZIP")
-GoFile: $(gofile_upload "$ROM_ZIP")
-PixelDrain: $(pixeldrain_upload "$ROM_ZIP")
-"
-fi
-
-for IMG in boot.img dtbo.img vendor.img super_empty.img recovery.img; do
-    FILE="${OUT_DIR}/${IMG}"
-    [ -f "$FILE" ] && PRIVATE_MSG+="🧩 ${IMG}
-GoFile: $(gofile_upload "$FILE")
-PixelDrain: $(pixeldrain_upload "$FILE")
-"
-done
-
-OTA_JSON="${OUT_DIR}/GMS/${DEVICE}.json"
-
-if [ -f "$OTA_JSON" ]; then
-    PRIVATE_MSG+="📑 OTA JSON: $(basename "$OTA_JSON")
-GoFile: $(gofile_upload "$OTA_JSON")
-PixelDrain: $(pixeldrain_upload "$OTA_JSON")
-
-"
-fi
 
 tg_upload "$PRIVATE_MSG"
 tg_send "🥀 Artifacts released into the wild."
