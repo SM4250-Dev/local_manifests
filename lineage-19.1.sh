@@ -1,275 +1,129 @@
 #!/bin/bash
 
 set -o pipefail
-set -o allexport
-source .env
-set +o allexport
+source .env 2>/dev/null || { echo "❌ .env not found"; exit 1; }
 
-# ================= COLORS =================
-cyan='\033[0;36m'
-blue='\033[0;34m'
-green='\033[0;32m'
-yellow='\033[1;33m'
-red='\033[0;31m'
-nocol='\033[0m'
+# ========== CONFIG ==========
+ROM="Lineage-19.1"; DEV="RMX2195"; TYPE="userdebug"; VER="12.1"; MAIN="mnrdnn"
+OUT="out/target/product/${DEVICE:-$DEV}"; LOG="build.log"; START=$(date +%s)
+JOBS=$(nproc); export TZ="Asia/Jakarta"
 
-# ================= TIMEZONE =================
-echo -e "${cyan}🕒 Switching system timezone to Asia/Jakarta ${nocol}"
-export TZ="Asia/Jakarta"
+# ========== CUSTOM ZIP NAME ==========
+# Format: Lineage-19.1-RMX2195-12.1-YYYYMMDD.zip
+CUSTOM_NAME="${ROM}-${DEV}-${VER}-$(date +%Y%m%d)"
 
-echo -e "${cyan}🕒 Current system time: $(date)${nocol}"
+# ========== COLORS ==========
+C='\033[0;36m'; G='\033[0;32m'; Y='\033[1;33m'; R='\033[0;31m'; N='\033[0m'
 
-# ================= ROM INFO =================
-ROM_NAME="Lineage-19.1"
-DEVICE="RMX2195"
-BUILD_TYPE="userdebug"
-ANDROID_VERSION="12.1"
-SECURITY_PATCH="Maret"
-ROM_VERSION="12.1-Testing"
-MAINTAINER="mnrdnn"
+# ========== TELEGRAM ==========
+tg() { curl -s -X POST "https://api.telegram.org/bot${TT}/sendMessage" -d "chat_id=${CI}" -d "parse_mode=HTML" --data-urlencode "text=$1" >/dev/null; }
+tg_edit() { curl -s -X POST "https://api.telegram.org/bot${TT}/editMessageText" -d "chat_id=${CI}" -d "message_id=$1" --data-urlencode "text=$2" >/dev/null; }
+tg_doc() { curl -fsSL -X POST -F document=@"$1" "https://api.telegram.org/bot${TT}/sendDocument" -F "chat_id=${CI}" -F "parse_mode=HTML" -F "caption=$2" >/dev/null; }
 
-OUT_DIR="out/target/product/${DEVICE}"
-START_TIME=$(date +%s)
-BUILD_LOG="build.log"
-ERROR_LOG="error_log.txt"
-
-if [ -z "$TT" ] || [ -z "$CI" ] || [ -z "$PD" ] || [ -z "$GT" ]; then
-  echo -e ".env gagal di setup"
-else
-  echo -e ".env berhasil di setup"
-fi
-
-# ================= TELEGRAM =================
-tg_send() {
-    curl -s -X POST "https://api.telegram.org/bot${TT}/sendMessage" \
-        -d "chat_id=${CI}" \
-        -d "parse_mode=HTML" \
-        -d "disable_web_page_preview=true" \
-        --data-urlencode "text=$1" >/dev/null
+# ========== UPLOAD ==========
+pd_upload() { 
+    [ ! -f "$1" ] && echo "NOT_FOUND" && return
+    ID=$(curl -sS -T "$1" -u :$PD https://pixeldrain.com/api/file/ | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')
+    [ -n "$ID" ] && echo "https://pixeldrain.com/u/$ID" || echo "FAILED"
+}
+gf_upload() {
+    for s in store2 store3 store4 store5; do
+        URL=$(curl -s -F "file=@$1" "https://${s}.gofile.io/uploadFile" | sed -n 's/.*"downloadPage":"\([^"]*\)".*/\1/p')
+        [ -n "$URL" ] && echo "$URL" && return
+    done; echo "FAILED"
 }
 
-tg_edit() {
-    curl -s -X POST "https://api.telegram.org/bot${TT}/editMessageText" \
-        -d "chat_id=${CI}" \
-        -d "message_id=$1" \
-        -d "parse_mode=HTML" \
-        --data-urlencode "text=$2" >/dev/null
-}
+# ========== BUILD ==========
+echo -e "${C}🕒 Build started at $(date)${N}"
+echo -e "${C}📦 Final Name: ${CUSTOM_NAME}.zip${N}"
+tg "✨ ${ROM} build started\n📱 ${DEV} | ${TYPE}\n📦 ${CUSTOM_NAME}.zip\n👤 ${MAIN}\n🌏 $(date +'%d %b %Y %H:%M')"
 
-tg_upload() {
-    curl -s -X POST "https://api.telegram.org/bot${TT}/sendMessage" \
-        -d "chat_id=${CI}" \
-        -d "parse_mode=HTML" \
-        -d "disable_web_page_preview=true" \
-        --data-urlencode "text=$1" >/dev/null
-}
+# Install dependencies
+echo -e "${Y}📦 Installing deps...${N}"
+sudo apt-get update -y && sudo apt-get install -y patchelf coreutils bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libwxgtk3.0-gtk3-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
+sudo ln -sf /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5 2>/dev/null
+sudo ln -sf /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5 2>/dev/null
 
-tg_up() {
-    echo "- Uploading file ..."
-    curl -fsSL -X POST -F document=@"$1" https://api.telegram.org/bot"${TT}"/sendDocument \
-        -F "chat_id=${CI}" \
-        -F "parse_mode=Markdown" \
-        -F "caption=$2"
-}
+# Clean
+echo -e "${Y}🧹 Cleaning...${N}"
+rm -rf build/soong/fsgen .repo/local_manifests prebuilts/clang/host/linux-x86 $OUT \
+       device/realme/$DEV vendor/realme/$DEV device/realme/sm4250-common \
+       kernel/realme/sm4250-common vendor/realme/sm4250-common
 
-# ================= PIXELDRAIN =================
-pixeldrain_upload() {
-    local FILE="$1"
-    [ ! -f "$FILE" ] && echo "NOT_FOUND" && return
-    RESP=$(curl -sS -T "$FILE" -u :$PD https://pixeldrain.com/api/file/)
-    ID=$(echo "$RESP" | grep -oP '(?<="id":")[^"]+')
-    [ -n "$ID" ] && echo "https://pixeldrain.com/u/$ID" || echo "UPLOAD_FAILED"
-}
-
-# ================= GOFILE =================
-gofile_upload() {
-    local FILE="$1"
-    for S in store2 store3 store4 store5; do
-        RESP=$(curl -s -F "file=@${FILE}" "https://${S}.gofile.io/uploadFile")
-        echo "$RESP" | grep -q '"status":"ok"' && \
-        echo "$RESP" | grep -oP '(?<=downloadPage":")[^"]+' && return
-    done
-    echo "UPLOAD_FAILED"
-}
-
-# ================= FAIL =================
-on_fail() {
-    ERR_LINK="N/A"
-    ERR_LOG="out/error.log"
-    [ -f "$ERR_LOG" ] && ERR_LINK=$(gofile_upload "$ERR_LOG")
-    
-    if [ $(stat -c%s "$ERR_LOG" 2>/dev/null || stat -f%z "$ERR_LOG" 2>/dev/null) -gt 52428800 ]; then
-        tg_upload "💥 Compilation failed
-📱 Codename: ${DEVICE}
-📄 Error log: ${ERR_LINK}"
-    else
-        tg_up "$ERR_LOG" "💥 Upload - Error Log
-📱 Codename: ${DEVICE}"
-    fi
-}
-
-# ================= BUILD START =================
-tg_send "✨ ${ROM_NAME} buildbot started
-📱 Codename: ${DEVICE} | 🧪 Build Type: ${BUILD_TYPE}
-⚙️ Version: ${ROM_VERSION} | ⚓️ Android: ${ANDROID_VERSION}
-🛡 Patch: ${SECURITY_PATCH} | 👤 Maintainer: ${MAINTAINER}
-🌏 $(date +"%d %b %Y %I:%M %p WIB")"
-
-# ================= BUILD =================
-echo -e "${blue}>>>> [STEP] Setup + Clean${nocol}"
-
-sudo apt-get update -y
-sudo apt-get install -y patchelf coreutils
-sudo ln -s /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5
-sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5
-
-rm -rf build/soong/fsgen
-rm -rf .repo/local_manifests; \
-rm -rf prebuilts/clang/host/linux-x86; \
-rm -rf out/target/product/RMX2195; \
-rm -rf device/realme/RMX2195; \
-rm -rf vendor/realme/RMX2195; \
-rm -rf device/realme/sm4250-common; \
-rm -rf kernel/realme/sm4250-common; \
-rm -rf vendor/realme/sm4250-common; \
-
-echo -e "${blue}>>>> [STEP] Repo Init${nocol}"
+# Init & Sync
 repo init -u https://github.com/LineageOS/android.git -b lineage-19.1 --git-lfs
-echo -e "${blue}>>>> [STEP] Local Manifests${nocol}"
-# Device Tree
-git clone https://github.com/SM4250-Dev/device_realme_RMX2195 device/realme/RMX2195 -b 12.1 --depth=1; \
-# Common
-git clone https://github.com/SM4250-Dev/device_realme_sm4250-common device/realme/sm4250-common -b 12.1 --depth=1; \
-# Vendor
-git clone https://github.com/SM4250-Dev/vendor_realme_RMX2195 vendor/realme/RMX2195 -b 12.1 --depth=1; \
-git clone https://github.com/SM4250-Dev/vendor_realme_sm4250-common vendor/realme/sm4250-common -b 12.1 --depth=1; \
-# Kernel
-git clone https://github.com/LineageOS/android_kernel_oneplus_sm4250.git kernel/realme/sm4250-common --depth=1 -b lineage-20 ; \
-echo -e "${yellow}>>>> [STEP] Repo Sync (this will take time)${nocol}"
-if [ -f /opt/crave/resync.sh ]; then
-    /opt/crave/resync.sh
-else
-    repo sync -c --force-sync --no-tags --no-clone-bundle -j$(nproc --all)
-fi
 
-echo -e "${green}>>>> [STEP] Export info & Build${nocol}"
+# Clone trees
+git clone https://github.com/SM4250-Dev/device_realme_RMX2195 device/realme/$DEV -b 12.1 --depth=1
+git clone https://github.com/SM4250-Dev/device_realme_sm4250-common device/realme/sm4250-common -b 12.1 --depth=1
+git clone https://github.com/SM4250-Dev/vendor_realme_RMX2195 vendor/realme/$DEV -b 12.1 --depth=1
+git clone https://github.com/SM4250-Dev/vendor_realme_sm4250-common vendor/realme/sm4250-common -b 12.1 --depth=1
+git clone https://github.com/LineageOS/android_kernel_oneplus_sm4250.git kernel/realme/sm4250-common --depth=1 -b lineage-20
+
+# Sync
+repo sync -c --force-sync --no-tags -j$JOBS || { tg "❌ Sync failed"; exit 1; }
+
+# Setup
 . build/envsetup.sh
-export BUILD_USERNAME=mnrdnn
-export BUILD_HOSTNAME=crave
-lunch lineage_${DEVICE}-${BUILD_TYPE} ; \
-# ================= LIVE MONITOR =================
-: > build.log
+export BUILD_USERNAME=$MAIN BUILD_HOSTNAME=crave
+lunch lineage_${DEV}-${TYPE}
 
-MSG_JSON=$(curl -s -X POST "https://api.telegram.org/bot${TT}/sendMessage" \
-    -d "chat_id=${CI}" \
-    -d "text=⚙️ <b>Compilation Started...</b>" \
-    -d "parse_mode=HTML")
-MSG_ID=$(echo "$MSG_JSON" | grep -oP '"message_id":\K[0-9]+')
+# Monitor
+MSG=$(curl -s -X POST "https://api.telegram.org/bot${TT}/sendMessage" -d "chat_id=${CI}" -d "text=⚙️ Compiling..." -d "parse_mode=HTML")
+MID=$(echo "$MSG" | sed -n 's/.*"message_id":\([0-9]*\).*/\1/p')
 
-live_monitor() {
-    local last_status=""
-    while true; do
-        sleep 60
-        if [ -f "$BUILD_LOG" ]; then
-            # Get last 20 lines and find compilation status
-            STATUS=$(tail -n 20 "$BUILD_LOG" | grep -E '\[.*%[[:space:]]+[0-9]+/[0-9]+\]|ninja:|make:' | tail -n 1)
-            
-            if [[ -z "$STATUS" ]]; then
-                STATUS=$(tail -n 1 "$BUILD_LOG" | cut -c1-60)
-            fi
-            
-            if [[ "$STATUS" != "$last_status" && ! -z "$STATUS" ]]; then
-                tg_edit "$MSG_ID" "⏳ Compiling status...
-<code>${STATUS}</code>
-<i>Last Update: $(date +'%I:%M %p')</i>"
-                last_status="$STATUS"
-            fi
-        fi
+( while true; do
+    sleep 60
+    STATUS=$(tail -n 30 "$LOG" 2>/dev/null | grep -E '\[[0-9]+%\]|[0-9]+%|Building' | tail -1)
+    [ -z "$STATUS" ] && STATUS=$(tail -1 "$LOG" 2>/dev/null | cut -c1-60)
+    [ -n "$STATUS" ] && tg_edit "$MID" "⏳ Building...\n<code>${STATUS:0:100}</code>\n🕐 $(date +'%H:%M')"
+done ) &
+MON_PID=$!
+
+# Build
+make bacon -j$JOBS 2>&1 | tee "$LOG"
+if [ ${PIPESTATUS[0]} -ne 0 ]; then 
+    kill $MON_PID 2>/dev/null
+    tg "❌ Build failed!\n📱 ${DEV}\n📄 Log: $(gf_upload "$LOG")"
+    exit 1
+fi
+kill $MON_PID 2>/dev/null
+
+# ========== RENAME ZIP WITH CUSTOM NAME ==========
+ZIP=$(ls -t $OUT/*.zip 2>/dev/null | head -1)
+if [ -n "$ZIP" ] && [ -f "$ZIP" ]; then
+    # Get original filename
+    ORIGINAL_NAME=$(basename "$ZIP")
+    
+    # Create final path with custom name
+    FINAL_ZIP="${OUT}/${CUSTOM_NAME}.zip"
+    
+    # Rename the zip
+    mv "$ZIP" "$FINAL_ZIP"
+    ZIP="$FINAL_ZIP"
+    
+    echo -e "${G}📦 Renamed: ${ORIGINAL_NAME} → ${CUSTOM_NAME}.zip${N}"
+fi
+
+# ========== UPLOAD ==========
+DUR=$(($(date +%s)-START))
+
+if [ -n "$ZIP" ] && [ -f "$ZIP" ]; then
+    SIZE=$(du -h "$ZIP" | awk '{print $1}')
+    PD_URL=$(pd_upload "$ZIP")
+    GF_URL=$(gf_upload "$ZIP")
+    
+    tg "✅ Build complete!\n📱 ${DEV} | ${TYPE}\n📦 ${CUSTOM_NAME}.zip\n📏 ${SIZE}\n⏱️ $((DUR/3600))h $(((DUR%3600)/60))m\n🔗 PD: ${PD_URL}\n🔄 GF: ${GF_URL}"
+    
+    # Upload images
+    for img in boot dtbo recovery super_empty; do
+        [ -f "$OUT/${img}.img" ] && tg "🧩 ${img}.img: $(gf_upload "$OUT/${img}.img")"
     done
-}
-
-# Start monitor in background
-live_monitor "$MSG_ID" &
-MONITOR_PID=$!
-
-# Start the build
-set -o pipefail
-make bacon -j$(nproc --all) 2>&1 | tee "$BUILD_LOG"
-
-tg_edit "$MSG_ID" "⏳ Done!
-<i>Last Update: $(date +'%I:%M %p')</i>"
-
-kill $MONITOR_PID 2>/dev/null
-MONITOR_PID=""
-
-if [ "${PIPESTATUS[0]}" -ne 0 ]; then
-    on_fail
-fi
-# ================= SUCCESS =================
-END_TIME=$(date +%s)
-DUR=$((END_TIME - START_TIME))
-
-BUILD_ID="Unknown"
-ROM_ZIP=$(ls -1 ${OUT_DIR}/*.zip 2>/dev/null | sort | tail -n 1)
-if [ -n "$ROM_ZIP" ]; then
-    BUILD_ID=$(basename "$ROM_ZIP" .zip)
-    ROM_SIZE=$(du -h "$ROM_ZIP" | awk '{print $1}')
-else
-    ROM_SIZE="Unknown"
 fi
 
-tg_send "🌌 Buildbot finished it's job
-📱 Codename: ${DEVICE} | 🧩 Build Type: ${BUILD_TYPE}
-🆔 Build ID: <code>${BUILD_ID}</code> | 📦 Size: ${ROM_SIZE}
-👤 Maintainer: ${MAINTAINER} | ⏳ Build time: $((DUR/3600))h $(((DUR%3600)/60))min"
+# Upload log
+LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || stat -f%z "$LOG" 2>/dev/null)
+[ -f "$LOG" ] && [ "$LOG_SIZE" -le 52428800 ] && tg_doc "$LOG" "Build Log - ${DEV}"
 
-tg_send "🚨 Uploading artifacts…"
-
-# ================= UPLOAD =================
-echo -e "${green}>>>> [STEP] Upload Artifacts${nocol}"
-
-
-PRIVATE_MSG="📦 ${ROM_NAME} Uploads
-📱 Device: ${DEVICE}
-🧩 Build Type: ${BUILD_TYPE}
-"
-
-ROM_ZIP=$(ls -t ${OUT_DIR}/*.zip 2>/dev/null | head -n 1)
-
-if [ -n "$ROM_ZIP" ]; then
-    PRIVATE_MSG+="📄 ROM: $(basename "$ROM_ZIP")
-PixelDrain: $(pixeldrain_upload "$ROM_ZIP")
-"
-fi
-
-for IMG in boot.img dtbo.img super_empty.img recovery.img; do
-    FILE="${OUT_DIR}/${IMG}"
-    [ -f "$FILE" ] && PRIVATE_MSG+="🧩 ${IMG}
-GoFile: $(gofile_upload "$FILE")
-"
-done
-
-OTA_JSON="${OUT_DIR}/GMS/${DEVICE}.json"
-
-if [ -f "$OTA_JSON" ]; then
-    PRIVATE_MSG+="📑 OTA JSON: $(basename "$OTA_JSON")
-GoFile: $(gofile_upload "$OTA_JSON")
-"
-fi
-
-upload_log(){
-    BUILD_LOG_LINK="N/A"
-    [ -f "$BUILD_LOG" ] && BUILD_LOG_LINK=$(gofile_upload "$BUILD_LOG")
-    if [ $(stat -c%s "$BUILD_LOG" 2>/dev/null || stat -f%z "$BUILD_LOG" 2>/dev/null) -gt 52428800 ]; then
-        tg_upload "💥 Build Log Upload
-📱 Codename: ${DEVICE}
-📄 Build log: ${BUILD_LOG_LINK}"
-    else
-        tg_up "$BUILD_LOG" "💥 Upload - Build Log
-📱 Codename: ${DEVICE}"
-    fi
-}
-upload_log
-
-tg_upload "$PRIVATE_MSG"
-tg_send "🥀 Artifacts released into the wild."
+tg "🥀 Artifacts released!"
+echo -e "${G}✅ Done! Time: $((DUR/60)) minutes${N}"
