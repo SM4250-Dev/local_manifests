@@ -68,9 +68,8 @@ tg_up() {
     echo "- Uploading file ..."
     curl -fsSL -X POST -F document=@"$1" https://api.telegram.org/bot"${TT}"/sendDocument \
         -F "chat_id=${CI}" \
-        -d "parse_mode=HTML" \
-        -d "disable_web_page_preview=true" \
-        --data-urlencode "text=$2" >/dev/null
+        -F "parse_mode=Markdown" \
+        -F "caption=$2"
 }
 
 # ================= PIXELDRAIN =================
@@ -106,16 +105,12 @@ on_fail() {
 📱 Codename: ${DEVICE}
 📄 Error log: ${ERR_LINK}"
 
-    exit 1
 }
 # ================= BUILD START =================
 tg_send "✨ ${ROM_NAME} buildbot started
-📱 Codename: ${DEVICE}
-🧪 Build Type: ${BUILD_TYPE}
-⚙️ Version: ${ROM_VERSION}
-⚓️ Android: ${ANDROID_VERSION}
-🛡 Patch: ${SECURITY_PATCH}
-👤 Maintainer: ${MAINTAINER}
+📱 Codename: ${DEVICE} | 🧪 Build Type: ${BUILD_TYPE}
+⚙️ Version: ${ROM_VERSION} | ⚓️ Android: ${ANDROID_VERSION}
+🛡 Patch: ${SECURITY_PATCH} | 👤 Maintainer: ${MAINTAINER}
 🌏 $(date +"%d %b %Y %I:%M %p WIB")"
 
 # ================= BUILD =================
@@ -129,7 +124,7 @@ sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/lib
 rm -rf build/soong/fsgen
 rm -rf .repo/local_manifests; \
 rm -rf prebuilts/clang/host/linux-x86; \
-#rm -rf out/target/product/RMX2195; \
+rm -rf out/target/product/RMX2195; \
 rm -rf device/realme/RMX2195; \
 rm -rf vendor/realme/RMX2195; \
 rm -rf device/realme/sm4250-common; \
@@ -187,10 +182,6 @@ live_monitor() {
 <i>Last Update: $(date +'%I:%M %p')</i>"
                 last_status="$STATUS"
             fi
-        else
-            tg_edit "$MSG_ID" "⏳ Compiling status...
-<code>Compiling ROM ...</code>
-<i>Last Update: $(date +'%I:%M %p')</i>"
         fi
     done
 }
@@ -206,6 +197,8 @@ make bacon -j$(nproc --all) 2>&1 | tee "$BUILD_LOG"
 tg_upload "💥 Debugging - Build Log
 📱 Codename: ${DEVICE}
 📄 Build log: $BUILD_LOG"
+tg_edit "$MSG_ID" "⏳ Done!
+<i>Last Update: $(date +'%I:%M %p')</i>"
 
 kill $MONITOR_PID 2>/dev/null
 MONITOR_PID=""
@@ -217,7 +210,7 @@ fi
 END_TIME=$(date +%s)
 DUR=$((END_TIME - START_TIME))
 
-BUILD_ID="UNKNOWN"
+BUILD_ID="Unknown"
 ROM_ZIP=$(ls -1 ${OUT_DIR}/*.zip 2>/dev/null | sort | tail -n 1)
 if [ -n "$ROM_ZIP" ]; then
     BUILD_ID=$(basename "$ROM_ZIP" .zip)
@@ -227,14 +220,11 @@ else
 fi
 
 tg_send "🌌 Buildbot finished it's job
-📱 Codename: ${DEVICE}
-🧩 Build Type: ${BUILD_TYPE}
-🆔 Build ID: <code>${BUILD_ID}</code>
-📦 Size: ${ROM_SIZE}
-👤 Maintainer: ${MAINTAINER}
-⏳ Compilation took $((DUR/3600))h $(((DUR%3600)/60))min"
+📱 Codename: ${DEVICE} | 🧩 Build Type: ${BUILD_TYPE}
+🆔 Build ID: <code>${BUILD_ID}</code> | 📦 Size: ${ROM_SIZE}
+👤 Maintainer: ${MAINTAINER} | ⏳ Build time: $((DUR/3600))h $(((DUR%3600)/60))min"
 
-tg_send "🚨 Compile Success. Uploading artifacts…"
+tg_send "🚨 Uploading artifacts…"
 
 # ================= UPLOAD =================
 echo -e "${green}>>>> [STEP] Upload Artifacts${nocol}"
