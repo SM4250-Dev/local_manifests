@@ -8,9 +8,7 @@ ROM="Lineage-19.1"; DEV="RMX2195"; TYPE="userdebug"; VER="12.1"; MAIN="mnrdnn"
 OUT="out/target/product/${DEVICE:-$DEV}"; LOG="build.log"; START=$(date +%s)
 JOBS=$(nproc); export TZ="Asia/Jakarta"
 
-# ========== CUSTOM ZIP NAME ==========
-# Format: Lineage-19.1-RMX2195-12.1-YYYYMMDD.zip
-CUSTOM_NAME="${ROM}-${DEV}-${VER}-$(date +%Y%m%d)"
+FINAL_NAME="${ROM}-${DEV}-${VER}-$(date +%Y%m%d)"
 
 # ========== COLORS ==========
 C='\033[0;36m'; G='\033[0;32m'; Y='\033[1;33m'; R='\033[0;31m'; N='\033[0m'
@@ -35,12 +33,11 @@ gf_upload() {
 
 # ========== BUILD ==========
 echo -e "${C}🕒 Build started at $(date)${N}"
-echo -e "${C}📦 Final Name: ${CUSTOM_NAME}.zip${N}"
-tg "✨ ${ROM} build started\n📱 ${DEV} | ${TYPE}\n📦 ${CUSTOM_NAME}.zip\n👤 ${MAIN}\n🌏 $(date +'%d %b %Y %H:%M')"
+tg "✨ ${ROM} build started\n📱 ${DEV} | ${TYPE}\n📦 ${FINAL_NAME}.zip\n👤 ${MAIN}\n🌏 $(date +'%d %b %Y %H:%M')"
 
 # Install dependencies
 echo -e "${Y}📦 Installing deps...${N}"
-sudo apt-get update -y && sudo apt-get install -y patchelf coreutils bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libwxgtk3.0-gtk3-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
+sudo apt-get update -y && sudo apt-get install -y patchelf coreutils 
 sudo ln -sf /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5 2>/dev/null
 sudo ln -sf /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5 2>/dev/null
 
@@ -89,20 +86,19 @@ if [ ${PIPESTATUS[0]} -ne 0 ]; then
 fi
 kill $MON_PID 2>/dev/null
 
-# ========== RENAME ZIP WITH CUSTOM NAME ==========
+# ========== RENAME ZIP ==========
 ZIP=$(ls -t $OUT/*.zip 2>/dev/null | head -1)
 if [ -n "$ZIP" ] && [ -f "$ZIP" ]; then
     # Get original filename
     ORIGINAL_NAME=$(basename "$ZIP")
     
-    # Create final path with custom name
-    FINAL_ZIP="${OUT}/${CUSTOM_NAME}.zip"
+    # Create final path
+    FINAL_ZIP="${OUT}/${FINAL_NAME}.zip"
     
     # Rename the zip
     mv "$ZIP" "$FINAL_ZIP"
     ZIP="$FINAL_ZIP"
     
-    echo -e "${G}📦 Renamed: ${ORIGINAL_NAME} → ${CUSTOM_NAME}.zip${N}"
 fi
 
 # ========== UPLOAD ==========
@@ -111,9 +107,8 @@ DUR=$(($(date +%s)-START))
 if [ -n "$ZIP" ] && [ -f "$ZIP" ]; then
     SIZE=$(du -h "$ZIP" | awk '{print $1}')
     PD_URL=$(pd_upload "$ZIP")
-    GF_URL=$(gf_upload "$ZIP")
     
-    tg "✅ Build complete!\n📱 ${DEV} | ${TYPE}\n📦 ${CUSTOM_NAME}.zip\n📏 ${SIZE}\n⏱️ $((DUR/3600))h $(((DUR%3600)/60))m\n🔗 PD: ${PD_URL}\n🔄 GF: ${GF_URL}"
+    tg "✅ Build complete!\n📱 ${DEV} | ${TYPE}\n📦 ${FINAL_NAME}.zip\n📏 ${SIZE}\n⏱️ $((DUR/3600))h $(((DUR%3600)/60))m\n🔗 PD: ${PD_URL}\n"
     
     # Upload images
     for img in boot dtbo recovery super_empty; do
