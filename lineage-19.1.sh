@@ -33,7 +33,11 @@ gf_upload() {
 
 # ========== BUILD ==========
 echo -e "${C}🕒 Build started at $(date)${N}"
-tg "✨ ${ROM} build started\n📱 ${DEV} | ${TYPE}\n📦 ${FINAL_NAME}.zip\n👤 ${MAIN}\n🌏 $(date +'%d %b %Y %H:%M')"
+tg "✨ ${ROM} build started
+📱 ${DEV} | ${TYPE}
+📦 ${FINAL_NAME}.zip
+👤 ${MAIN}
+🌏 $(date +'%d %b %Y %H:%M')"
 
 # Install dependencies
 echo -e "${Y}📦 Installing deps...${N}"
@@ -73,7 +77,9 @@ MID=$(echo "$MSG" | sed -n 's/.*"message_id":\([0-9]*\).*/\1/p')
     sleep 60
     STATUS=$(tail -n 30 "$LOG" 2>/dev/null | grep -E '\[[0-9]+%\]|[0-9]+%|Building' | tail -1)
     [ -z "$STATUS" ] && STATUS=$(tail -1 "$LOG" 2>/dev/null | cut -c1-60)
-    [ -n "$STATUS" ] && tg_edit "$MID" "⏳ Building...\n<code>${STATUS:0:100}</code>\n🕐 $(date +'%H:%M')"
+    [ -n "$STATUS" ] && tg_edit "$MID" "⏳ Building...
+<code>${STATUS:0:100}</code>
+🕐 $(date +'%H:%M')"
 done ) &
 MON_PID=$!
 
@@ -81,7 +87,9 @@ MON_PID=$!
 make bacon -j$JOBS 2>&1 | tee "$LOG"
 if [ ${PIPESTATUS[0]} -ne 0 ]; then 
     kill $MON_PID 2>/dev/null
-    tg "❌ Build failed!\n📱 ${DEV}\n📄 Log: $(gf_upload "$LOG")"
+    tg "❌ Build failed!
+📱 ${DEV}
+📄 Log: $(gf_upload "$LOG")"
     exit 1
 fi
 kill $MON_PID 2>/dev/null
@@ -108,7 +116,12 @@ if [ -n "$ZIP" ] && [ -f "$ZIP" ]; then
     SIZE=$(du -h "$ZIP" | awk '{print $1}')
     PD_URL=$(pd_upload "$ZIP")
     
-    tg "✅ Build complete!\n📱 ${DEV} | ${TYPE}\n📦 ${FINAL_NAME}.zip\n📏 ${SIZE}\n⏱️ $((DUR/3600))h $(((DUR%3600)/60))m\n🔗 PD: ${PD_URL}\n"
+    tg "✅ Build complete!
+📱 ${DEV} | ${TYPE}
+📦 ${FINAL_NAME}.zip
+📏 ${SIZE}
+⏱️ $((DUR/3600))h $(((DUR%3600)/60))m
+🔗 PD: ${PD_URL}\n"
     
     # Upload images
     for img in boot dtbo recovery super_empty; do
