@@ -98,7 +98,7 @@ if [ ${PIPESTATUS[0]} -ne 0 ]; then
 📄 Log: $(gf_upload "$LOG")"
       fi
     else
-    tg "❌ Build failed!
+      tg "❌ Build failed!
 📱 ${DEV}
 📄 Log file not found!"
     fi
