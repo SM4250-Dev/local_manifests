@@ -33,7 +33,7 @@ gf_upload() {
 
 # ========== BUILD ==========
 echo -e "${C}🕒 Build started at $(date)${N}"
-tg "✨ ${ROM} - Build started at $(date)${N}
+tg "✨ ${ROM} - Build started at $(date)
 📱 ${DEV} | ${TYPE}
 📦 ${FINAL_NAME}
 👤 ${MAIN}
