@@ -34,8 +34,7 @@ gf_upload() {
 # ========== BUILD ==========
 echo -e "${C}🕒 Build started at $(date)${N}"
 tg "Build started
-✨ ${ROM}-${DEV} | ${TYPE}
-📦 ${FINAL_NAME}
+✨ ${ROM}-${DEV}
 👤 ${MAIN}
 🌏 $(date +'%d %b %Y %H:%M')"
 
@@ -77,28 +76,31 @@ MID=$(echo "$MSG" | sed -n 's/.*"message_id":\([0-9]*\).*/\1/p')
     STATUS=$(tail -n 30 "$LOG" 2>/dev/null | grep -E '\[[0-9]+%\]|[0-9]+%|Building' | tail -1)
     [ -z "$STATUS" ] && STATUS=$(tail -1 "$LOG" 2>/dev/null | cut -c1-60)
     [ -n "$STATUS" ] && tg_edit "$MID" "⏳ Build Starting...
-⏳ ${STATUS:0:100}
+
+☕ ${STATUS:0:100}
+
 Last Update: $(date +'%H:%M')"
 done ) &
 MON_PID=$!
+
 # Build
 make bacon -j$JOBS 2>&1 | tee "$LOG"
 
 if [ ${PIPESTATUS[0]} -ne 0 ]; then 
-    kill $MON_PID 2>/dev/null
+    kill $MON_PID
     LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || stat -f%z "$LOG" 2>/dev/null)
     
     if [ "$LOG_SIZE" -le 52428800 ] 2>/dev/null; then 
-      tg_doc "$LOG" "Build Log - ${DEV}"
+      tg_doc "$LOG" "Failed! Build Log - ${DEV}"
     else
-      tg "❌ Build failed! - $(gf_upload "$LOG")"
+      tg "Failed! - $(gf_upload "$LOG")"
     fi
     for img in boot dtbo recovery; do
         [ -f "$OUT/${img}.img" ] && tg "${img}.img: $(gf_upload "$OUT/${img}.img")"
     done
     exit 1
 fi
-kill $MON_PID 2>/dev/null
+kill $MON_PID
 
 # ========== RENAME ZIP ==========
 ZIP=$(ls -t $OUT/*.zip 2>/dev/null | head -1)
@@ -131,13 +133,11 @@ Download: ${PD_URL}"
     
     # Upload images
     for img in boot dtbo recovery; do
-        [ -f "$OUT/${img}.img" ] && tg "${img}.img: $(gf_upload "$OUT/${img}.img")"
+        [ -f "$OUT/${img}.img" ] && tg "Download : ${img}.img: $(gf_upload "$OUT/${img}.img")"
     done
 fi
 
 # Upload log
 LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || stat -f%z "$LOG" 2>/dev/null)
 [ -f "$LOG" ] && [ "$LOG_SIZE" -le 52428800 ] && tg_doc "$LOG" "Build Log - ${DEV}"
-
-tg "🥀 Artifacts released!"
 echo -e "${G}✅ Done! Time: $((DUR/60)) minutes${N}"
