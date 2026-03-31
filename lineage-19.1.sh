@@ -33,8 +33,8 @@ gf_upload() {
 
 # ========== BUILD ==========
 echo -e "${C}🕒 Build started at $(date)${N}"
-tg "✨ ${ROM} - Build started at $(date)
-📱 ${DEV} | ${TYPE}
+tg "Build started
+✨ ${ROM}-${DEV} | ${TYPE}
 📦 ${FINAL_NAME}
 👤 ${MAIN}
 🌏 $(date +'%d %b %Y %H:%M')"
@@ -87,20 +87,12 @@ MON_PID=$!
 make bacon -j$JOBS 2>&1 | tee "$LOG"
 if [ ${PIPESTATUS[0]} -ne 0 ]; then 
     kill $MON_PID 2>/dev/null
-    if [ -f "$LOG" ]; then
-      LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || stat -f%z "$LOG" 2>/dev/null)
+    LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || stat -f%z "$LOG" 2>/dev/null)
     
-      if [ "$LOG_SIZE" -le 52428800 ] 2>/dev/null; then 
-        tg_doc "$LOG" "Build Log - ${DEV}"
-      else
-        tg "❌ Build failed!
-📱 ${DEV}
-📄 Log: $(gf_upload "$LOG")"
-      fi
+    if [ "$LOG_SIZE" -le 52428800 ] 2>/dev/null; then 
+      tg_doc "$LOG" "Build Log - ${DEV}"
     else
-      tg "❌ Build failed!
-📱 ${DEV}
-📄 Log file not found!"
+      tg "❌ Build failed! - $(gf_upload "$LOG")"
     fi
     for img in boot dtbo recovery super_empty; do
         [ -f "$OUT/${img}.img" ] && tg "🧩 ${img}.img: $(gf_upload "$OUT/${img}.img")"
@@ -133,7 +125,7 @@ if [ -n "$ZIP" ] && [ -f "$ZIP" ]; then
     PD_URL=$(pd_upload "$ZIP")
     
     tg "✅ Build complete!
-📱 ${DEV} | ${TYPE}
+✨ ${ROM}-${DEV} | ${TYPE}
 📦 ${FINAL_NAME}
 📏 ${SIZE}
 ⏱️ $((DUR/3600))h $(((DUR%3600)/60))m
