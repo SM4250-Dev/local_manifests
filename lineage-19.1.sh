@@ -70,21 +70,21 @@ export BUILD_USERNAME=$MAIN BUILD_HOSTNAME=crave
 lunch lineage_${DEV}-${TYPE}
 
 # Monitor
-MSG=$(curl -s -X POST "https://api.telegram.org/bot${TT}/sendMessage" -d "chat_id=${CI}" -d "text=⚙️ Compiling..." -d "parse_mode=HTML")
+MSG=$(curl -s -X POST "https://api.telegram.org/bot${TT}/sendMessage" -d "chat_id=${CI}" -d "text=⚙️ Initialized ..." -d "parse_mode=HTML")
 MID=$(echo "$MSG" | sed -n 's/.*"message_id":\([0-9]*\).*/\1/p')
 
+# Build
+make bacon -j$JOBS 2>&1 | tee "$LOG"
 ( while true; do
     sleep 30
     STATUS=$(tail -n 30 "$LOG" 2>/dev/null | grep -E '\[[0-9]+%\]|[0-9]+%|Building' | tail -1)
     [ -z "$STATUS" ] && STATUS=$(tail -1 "$LOG" 2>/dev/null | cut -c1-60)
-    [ -n "$STATUS" ] && tg_edit "$MID" "⏳ Building...
-⏳${STATUS:0:100}
+    [ -n "$STATUS" ] && tg_edit "$MID" "⏳ Build Starting...
+⏳ ${STATUS:0:100}
 Last Update: $(date +'%H:%M')"
 done ) &
 MON_PID=$!
 
-# Build
-make bacon -j$JOBS 2>&1 | tee "$LOG"
 if [ ${PIPESTATUS[0]} -ne 0 ]; then 
     kill $MON_PID 2>/dev/null
     LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || stat -f%z "$LOG" 2>/dev/null)
@@ -94,10 +94,9 @@ if [ ${PIPESTATUS[0]} -ne 0 ]; then
     else
       tg "❌ Build failed! - $(gf_upload "$LOG")"
     fi
-    for img in boot dtbo recovery super_empty; do
-        [ -f "$OUT/${img}.img" ] && tg "🧩 ${img}.img: $(gf_upload "$OUT/${img}.img")"
+    for img in boot dtbo recovery; do
+        [ -f "$OUT/${img}.img" ] && tg "${img}.img: $(gf_upload "$OUT/${img}.img")"
     done
-    kill $MON_PID 2>/dev/null
     exit 1
 fi
 kill $MON_PID 2>/dev/null
