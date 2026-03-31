@@ -125,11 +125,12 @@ if [ -n "$ZIP" ] && [ -f "$ZIP" ]; then
     PD_URL=$(pd_upload "$ZIP")
     
     tg "✅ Build complete!
-✨ ${ROM}-${DEV} | ${TYPE}
-📦 ${FINAL_NAME}
+✨ ${ROM}-${DEV}
 📏 ${SIZE}
 ⏱️ $((DUR/3600))h $(((DUR%3600)/60))m
-Download: ${PD_URL}"
+Download: ${PD_URL}
+
+@udyneosprjkt"
     
     # Upload images
     for img in boot dtbo recovery; do
