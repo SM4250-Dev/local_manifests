@@ -72,9 +72,6 @@ lunch lineage_${DEV}-${TYPE}
 # Monitor
 MSG=$(curl -s -X POST "https://api.telegram.org/bot${TT}/sendMessage" -d "chat_id=${CI}" -d "text=⚙️ Initialized ..." -d "parse_mode=HTML")
 MID=$(echo "$MSG" | sed -n 's/.*"message_id":\([0-9]*\).*/\1/p')
-
-# Build
-make bacon -j$JOBS 2>&1 | tee "$LOG"
 ( while true; do
     sleep 30
     STATUS=$(tail -n 30 "$LOG" 2>/dev/null | grep -E '\[[0-9]+%\]|[0-9]+%|Building' | tail -1)
@@ -84,6 +81,8 @@ make bacon -j$JOBS 2>&1 | tee "$LOG"
 Last Update: $(date +'%H:%M')"
 done ) &
 MON_PID=$!
+# Build
+make bacon -j$JOBS 2>&1 | tee "$LOG"
 
 if [ ${PIPESTATUS[0]} -ne 0 ]; then 
     kill $MON_PID 2>/dev/null
@@ -128,11 +127,11 @@ if [ -n "$ZIP" ] && [ -f "$ZIP" ]; then
 📦 ${FINAL_NAME}
 📏 ${SIZE}
 ⏱️ $((DUR/3600))h $(((DUR%3600)/60))m
-🔗 PD: ${PD_URL}\n"
+Download: ${PD_URL}\n"
     
     # Upload images
-    for img in boot dtbo recovery super_empty; do
-        [ -f "$OUT/${img}.img" ] && tg "🧩 ${img}.img: $(gf_upload "$OUT/${img}.img")"
+    for img in boot dtbo recovery; do
+        [ -f "$OUT/${img}.img" ] && tg "${img}.img: $(gf_upload "$OUT/${img}.img")"
     done
 fi
 
