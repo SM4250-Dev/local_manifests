@@ -46,7 +46,7 @@ sudo ln -sf /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/
 sudo ln -sf /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/x86_64-linux-gnu/libtinfo.so.5 2>/dev/null
 
 # Clean
-echo -e "${Y}🧹 Cleaning...${N}"
+echo -e "${Y}🧹 Clean up...${N}"
 rm -rf build/soong/fsgen .repo/local_manifests prebuilts/clang/host/linux-x86 $OUT \
        device/realme/$DEV vendor/realme/$DEV device/realme/sm4250-common \
        kernel/realme/sm4250-common vendor/realme/sm4250-common
@@ -127,7 +127,7 @@ if [ -n "$ZIP" ] && [ -f "$ZIP" ]; then
 📦 ${FINAL_NAME}
 📏 ${SIZE}
 ⏱️ $((DUR/3600))h $(((DUR%3600)/60))m
-Download: ${PD_URL}\n"
+Download: ${PD_URL}"
     
     # Upload images
     for img in boot dtbo recovery; do
